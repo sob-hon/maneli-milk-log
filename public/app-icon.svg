@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Maneli milk drop">
+  <defs>
+    <linearGradient id="bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e273a0"/>
+      <stop offset="0.72" stop-color="#c64f83"/>
+      <stop offset="1" stop-color="#963462"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="124" fill="url(#bg)"/>
+  <circle cx="404" cy="102" r="76" fill="#fff" opacity="0.08"/>
+  <path d="M256 105c-39 55-116 142-116 224 0 64 52 116 116 116s116-52 116-116c0-82-77-169-116-224Z" fill="#fff"/>
+  <path d="M200 337c13 31 42 50 76 48" fill="none" stroke="#7ad6ca" stroke-linecap="round" stroke-width="22"/>
+</svg>
