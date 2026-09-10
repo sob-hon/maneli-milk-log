@@ -198,7 +198,7 @@ begin
     expires_at
   ) values (
     member_household_id,
-    encode(digest(plain_code, 'sha256'), 'hex'),
+    encode(extensions.digest(plain_code, 'sha256'), 'hex'),
     auth.uid(),
     now() + interval '7 days'
   );
@@ -226,7 +226,7 @@ begin
 
   select * into matched_invite
   from public.household_invites
-  where code_hash = encode(digest(upper(trim(invite_code)), 'sha256'), 'hex')
+  where code_hash = encode(extensions.digest(upper(trim(invite_code)), 'sha256'), 'hex')
     and redeemed_at is null
     and expires_at > now()
   for update;
@@ -269,4 +269,3 @@ grant execute on function public.create_household_invite() to authenticated;
 grant execute on function public.join_household_by_code(text) to authenticated;
 
 alter publication supabase_realtime add table public.feedings;
-
