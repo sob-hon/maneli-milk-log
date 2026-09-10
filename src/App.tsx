@@ -6,7 +6,6 @@ import {
   BarChart3,
   CalendarDays,
   Check,
-  ChevronRight,
   Clock3,
   Cloud,
   CloudOff,
@@ -320,9 +319,9 @@ function FeedingForm({
   const [amount, setAmount] = useState(
     initial ? String(initial.amount_ml) : "",
   );
-  const [fedAt, setFedAt] = useState(
-    toDateTimeInput(initial?.fed_at ?? new Date()),
-  );
+  const initialDateTime = toDateTimeInput(initial?.fed_at ?? new Date());
+  const [feedDate, setFeedDate] = useState(initialDateTime.slice(0, 10));
+  const [feedTime, setFeedTime] = useState(initialDateTime.slice(11, 16));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -333,6 +332,7 @@ function FeedingForm({
       setError("Enter a whole amount between 1 and 1,000 ml.");
       return;
     }
+    const fedAt = `${feedDate}T${feedTime}`;
     const parsedDate = new Date(fedAt);
     if (Number.isNaN(parsedDate.getTime())) {
       setError("Choose a valid date and time.");
@@ -347,8 +347,10 @@ function FeedingForm({
     try {
       await onSave({ amountMl: parsed, fedAt: fromDateTimeInput(fedAt) });
       if (!initial) {
+        const now = toDateTimeInput(new Date());
         setAmount("");
-        setFedAt(toDateTimeInput(new Date()));
+        setFeedDate(now.slice(0, 10));
+        setFeedTime(now.slice(11, 16));
       }
     } catch (saveError) {
       setError(
@@ -359,6 +361,13 @@ function FeedingForm({
     } finally {
       setSaving(false);
     }
+  };
+
+  const useCurrentTime = () => {
+    const now = toDateTimeInput(new Date());
+    setFeedDate(now.slice(0, 10));
+    setFeedTime(now.slice(11, 16));
+    setError("");
   };
 
   return (
@@ -372,9 +381,9 @@ function FeedingForm({
             <p className="eyebrow">QUICK ADD</p>
             <h2>Log a bottle</h2>
           </div>
-          <span className="now-badge">
-            <span /> Now
-          </span>
+          <button type="button" className="now-badge" onClick={useCurrentTime}>
+            <span /> Use now
+          </button>
         </div>
       )}
       <label
@@ -408,19 +417,36 @@ function FeedingForm({
           </button>
         ))}
       </div>
-      <label className="date-field">
-        <CalendarDays />
-        <span>
-          <small>Date &amp; time</small>
+      <div className="date-time-grid">
+        <label className="date-time-field">
+          <span className="date-time-icon"><CalendarDays /></span>
+          <span className="date-time-content">
+            <small>Date</small>
+            <input
+              type="date"
+              value={feedDate}
+              max={dayKey(new Date())}
+              onChange={(event) => setFeedDate(event.target.value)}
+              required
+            />
+          </span>
+        </label>
+        <label className="date-time-field date-time-field--time">
+          <span className="date-time-icon"><Clock3 /></span>
+          <span className="date-time-content">
+            <small>Time</small>
+            <strong className="time-display">{feedTime || "--:--"}</strong>
+          </span>
           <input
-            type="datetime-local"
-            value={fedAt}
-            max={toDateTimeInput(new Date(Date.now() + 5 * 60_000))}
-            onChange={(event) => setFedAt(event.target.value)}
+            className="native-time-input"
+            type="time"
+            value={feedTime}
+            onChange={(event) => setFeedTime(event.target.value)}
+            aria-label="Feeding time"
+            required
           />
-        </span>
-        <ChevronRight />
-      </label>
+        </label>
+      </div>
       {error && (
         <p className="field-error" id="amount-error">
           {error}
