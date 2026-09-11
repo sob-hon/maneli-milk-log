@@ -224,6 +224,10 @@
 .join-form { display: grid; }
 .join-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .join-row .secondary-button { min-height: 53px; }
+.code-sign-in .secondary-button { min-width: 78px; }
+.code-sign-in input { letter-spacing: 0.08em; font-weight: 750; text-transform: uppercase; }
+.code-access-note { margin: 9px 2px 0; color: #8a98a5; font-size: 0.64rem; line-height: 1.5; }
+.auth-error { margin: 14px 2px 0; }
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

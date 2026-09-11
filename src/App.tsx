@@ -79,11 +79,17 @@ function LoadingScreen() {
 
 function SignIn({
   onSend,
+  onJoinWithCode,
+  externalError,
 }: {
   onSend: (email: string) => Promise<{ error: Error | null }>;
+  onJoinWithCode: (code: string) => Promise<{ error: Error | null }>;
+  externalError?: string | null;
 }) {
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [codeStatus, setCodeStatus] = useState<"idle" | "joining">("idle");
   const [error, setError] = useState("");
 
   const submit = async (event: FormEvent) => {
@@ -98,6 +104,19 @@ function SignIn({
     }
     setStatus("sent");
   };
+
+  const joinWithCode = async (event: FormEvent) => {
+    event.preventDefault();
+    setCodeStatus("joining");
+    setError("");
+    const result = await onJoinWithCode(code.trim().toUpperCase());
+    if (result.error) {
+      setError(result.error.message);
+      setCodeStatus("idle");
+    }
+  };
+
+  const busy = status === "sending" || codeStatus === "joining";
 
   return (
     <main className="auth-shell">
@@ -131,8 +150,7 @@ function SignIn({
               onChange={(event) => setEmail(event.target.value)}
               required
             />
-            {error && <p className="field-error">{error}</p>}
-            <button className="primary-button" disabled={status === "sending"}>
+            <button className="primary-button" disabled={busy}>
               {status === "sending" ? (
                 <LoaderCircle className="spin" />
               ) : (
@@ -141,6 +159,46 @@ function SignIn({
               {status !== "sending" && <ArrowRight />}
             </button>
           </form>
+        )}
+        {status !== "sent" && (
+          <>
+            <div className="or-divider">
+              <span>or</span>
+            </div>
+            <form className="join-form code-sign-in" onSubmit={joinWithCode}>
+              <label htmlFor="partner-code">Partner invitation code</label>
+              <div className="join-row">
+                <input
+                  id="partner-code"
+                  value={code}
+                  onChange={(event) =>
+                    setCode(event.target.value.replace(/\s/g, "").toUpperCase())
+                  }
+                  placeholder="ABC12345"
+                  autoComplete="one-time-code"
+                  minLength={8}
+                  maxLength={8}
+                  pattern="[A-F0-9]{8}"
+                  title="Enter the eight-character invitation code"
+                  required
+                />
+                <button className="secondary-button" disabled={busy}>
+                  {codeStatus === "joining" ? (
+                    <LoaderCircle className="spin" />
+                  ) : (
+                    "Enter"
+                  )}
+                </button>
+              </div>
+              <p className="code-access-note">
+                No email needed. Access stays on this device; signing out or clearing
+                Safari data requires a new code.
+              </p>
+            </form>
+          </>
+        )}
+        {(error || externalError) && status !== "sent" && (
+          <p className="field-error auth-error">{error || externalError}</p>
         )}
         <p className="privacy-note">
           No password. Only invited family members can see the records.
@@ -209,7 +267,10 @@ function FamilySetup({
                 setCode(event.target.value.replace(/\s/g, ""))
               }
               placeholder="ABC12345"
-              maxLength={12}
+              minLength={8}
+              maxLength={8}
+              pattern="[A-Fa-f0-9]{8}"
+              title="Enter the eight-character invitation code"
               required
             />
             <button className="secondary-button" disabled={Boolean(busy)}>
@@ -1021,7 +1082,13 @@ function App() {
 
   if (cloud.isLoading) return <LoadingScreen />;
   if (cloud.isCloudConfigured && !cloud.session)
-    return <SignIn onSend={cloud.sendMagicLink} />;
+    return (
+      <SignIn
+        onSend={cloud.sendMagicLink}
+        onJoinWithCode={cloud.joinWithCode}
+        externalError={cloud.error}
+      />
+    );
   if (cloud.isCloudConfigured && cloud.session && !cloud.context) {
     return (
       <FamilySetup

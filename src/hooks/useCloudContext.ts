@@ -58,7 +58,7 @@ export function useCloudContext() {
       babyId: baby.id,
       babyName: baby.name,
       userId: currentSession.user.id,
-      email: currentSession.user.email,
+      email: currentSession.user.email ?? 'Partner code access · this device only',
       mode: 'cloud',
     })
     setIsLoading(false)
@@ -110,6 +110,39 @@ export function useCloudContext() {
     return result
   }
 
+  const joinWithCode = async (code: string) => {
+    if (!supabase) return { error: new Error('Cloud sync is not configured') }
+
+    setError(null)
+    setIsLoading(true)
+    const { data, error: authError } = await supabase.auth.signInAnonymously()
+
+    if (authError || !data.session) {
+      const nextError = authError ?? new Error('Unable to start partner access')
+      setError(nextError.message)
+      setIsLoading(false)
+      return { error: nextError }
+    }
+
+    const result = await supabase.rpc('join_household_by_code', {
+      invite_code: code.trim().toUpperCase(),
+    })
+
+    if (result.error) {
+      const nextError = new Error(result.error.message)
+      await supabase.auth.signOut()
+      setSession(null)
+      setContext(null)
+      setError(nextError.message)
+      setIsLoading(false)
+      return { error: nextError }
+    }
+
+    setSession(data.session)
+    await loadHousehold(data.session)
+    return { error: null }
+  }
+
   const signOut = async () => {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -125,7 +158,7 @@ export function useCloudContext() {
     sendMagicLink,
     createFamily,
     joinFamily,
+    joinWithCode,
     signOut,
   }
 }
-
